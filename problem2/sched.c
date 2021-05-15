@@ -81,7 +81,14 @@ int nbr_of_tasks()
 {
     // Todo: Implement this function. You should not change anything outside this
     // function.
-	return 0;
+    task* curr_task = first_task;
+    int count =0;
+    while(curr_task!=NULL){
+
+        count ++;
+        curr_task = curr_task->next;
+    }
+	return count;
 }
 
 /* Print information about all tasks in the list
@@ -113,11 +120,24 @@ task.
 */
 int schedulable_Liu_Layland()
 {
-    // Todo: Implement this function
+    
 
-    // REMOVE
 
-    int schedulable = SCHED_UNKNOWN; // Change this
+    int schedulable = SCHED_UNKNOWN;
+    double U =0;
+    task* curr_task = first_task;
+
+    while (curr_task != NULL) {
+        U += (double) curr_task->WCET / curr_task->period;
+        curr_task = curr_task->next;    
+        }
+        int N = nbr_of_tasks();
+    double upper_limit = N*(pow(2,1/N) - 1);
+    int check = (U<=upper_limit);
+    if(check){
+      schedulable = SCHED_YES;
+    }
+
     return schedulable;
 }
 
@@ -137,7 +157,35 @@ int schedulable_response_time_analysis()
     // Todo: Implement this function
     // The C library provides a ceiling function that returns the smallest integer
     // value greater than or equal to x: double ceil(double x)
-    int schedulable = SCHED_UNKNOWN; // Change this
+    int schedulable = SCHED_YES; 
+    task* curr_task = first_task;
+    int N = nbr_of_tasks();
+    
+    while (curr_task != NULL) {
+        int w_prev = 0;
+        int w_next = curr_task->WCET;
+        while (w_prev!=w_next)
+        {
+            w_prev = w_next;
+            w_next = curr_task->WCET;
+            task* hp = first_task;
+            while (hp!=NULL)
+            {
+                if(hp->priority > curr_task->priority)
+                    {
+                       w_next += ceil((double) w_prev/hp->period)* hp->WCET;
+                    }
+                    hp =hp->next;
+            }
+            
+        }
+        int R = w_next;
+        if (R > curr_task->deadline)
+        {
+            schedulable = SCHED_NO;
+        }
+        curr_task = curr_task->next;
+        }
     return schedulable;
 }
 
@@ -179,7 +227,7 @@ int check_tests()
     add_task("T4", 50, 4, 2, 50);
     add_task("T5", 100, 2, 1, 100);
 
-    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_UNKNOWN);
+    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_YES);
 
     remove_all_tasks();
     // Add test
@@ -187,7 +235,7 @@ int check_tests()
     add_task("T2", 40, 10, 2, 40);
     add_task("T3", 30, 10, 3, 50);
 
-    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_UNKNOWN);
+    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_NO);
 
     remove_all_tasks();
     // Add test
@@ -195,7 +243,7 @@ int check_tests()
     add_task("T2", 40, 10, 2, 40);
     add_task("T3", 20, 10, 3, 50);
 
-    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_UNKNOWN);
+    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_NO);
 
     remove_all_tasks();
     // Add test
@@ -203,7 +251,7 @@ int check_tests()
     add_task("T2", 12, 3, 2, 12);
     add_task("T3", 20, 5, 1, 20);
 
-    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_UNKNOWN);
+    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_YES);
 
     remove_all_tasks();
     // Add test
@@ -211,7 +259,7 @@ int check_tests()
     add_task("T2", 12, 3, 2, 6);
     add_task("T3", 20, 5, 1, 20);
 
-    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_UNKNOWN);
+    nbr_of_failed_tests += check_schedulable(SCHED_UNKNOWN, SCHED_YES);
 
     return nbr_of_failed_tests;
 }
